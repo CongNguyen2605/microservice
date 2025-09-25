@@ -11,13 +11,13 @@ public class JwtUtil {
     @Value("${jwt.signerKey}")
     private String signerKey;
 
-    public String extractUsername(String token) {
+    public String extractId(String token) {
         try {
             Claims claims = Jwts.parser()
                     .setSigningKey(signerKey.getBytes())
                     .parseClaimsJws(token)
                     .getBody();
-            return claims.get("sub", String.class);
+            return claims.getSubject();
         } catch (Exception e) {
             throw new RuntimeException("Invalid JWT token", e);
         }
