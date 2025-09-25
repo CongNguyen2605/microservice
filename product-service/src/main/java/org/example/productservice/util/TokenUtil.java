@@ -2,7 +2,6 @@ package org.example.productservice.util;
 
 import lombok.RequiredArgsConstructor;
 import org.example.productservice.client.IdentityClient;
-import org.example.productservice.dto.user.UserDto;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -19,8 +18,7 @@ public class TokenUtil {
         assert attributes != null;
         String authHeader = attributes.getRequest().getHeader(HttpHeaders.AUTHORIZATION);
         String token = authHeader.substring(7);
-        String username = jwtUtil.extractUsername(token);
-        UserDto userResponse = identityClient.findUser(username);
-        return userResponse.getId();
+        Long id = Long.valueOf(jwtUtil.extractId(token));
+        return id;
     }
 }
