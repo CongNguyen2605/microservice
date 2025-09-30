@@ -1,0 +1,2 @@
+debezium:
+  url: http://localhost:8083
