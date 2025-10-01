@@ -22,6 +22,8 @@ import java.util.Map;
 public class AuditEntryLatestEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(length = 36)
     private String id;
 
     private String tableConfigurationId;
@@ -39,15 +41,15 @@ public class AuditEntryLatestEntity {
 
     private String applicationName;
 
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "TEXT")
     @Convert(converter = JsonMapConverter.class)
     private Map<String, Object> beforeValues;
 
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "TEXT")
     @Convert(converter = JsonMapConverter.class)
     private Map<String, Object> afterValues;
 
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "TEXT")
     @Convert(converter = FieldChangeListConverter.class)
     private List<FieldChange> fieldChanges;
 }
