@@ -7,7 +7,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 
 @EnableFeignClients
-@EnableEurekaServer
 @SpringBootApplication
 public class ProductServiceApplication {
 

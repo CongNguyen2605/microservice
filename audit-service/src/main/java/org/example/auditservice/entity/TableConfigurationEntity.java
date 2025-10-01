@@ -16,6 +16,8 @@ import java.util.Set;
 public class TableConfigurationEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(length = 36)
     private String id;
 
     private String databaseName;
@@ -25,9 +27,9 @@ public class TableConfigurationEntity {
     private String tableName;
 
     private boolean auditEnabled;
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "TEXT")
     private String excludedFields;
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "TEXT")
     private String  sensitiveFields ;
 
     private int retentionDays;

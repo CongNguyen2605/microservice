@@ -1,9 +1,6 @@
 package org.example.auditservice.entity;
 
-import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,6 +22,8 @@ import java.util.Set;
 public class DebeziumConnectorEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(length = 36)
     private String id;
 
     private String connectorName;
@@ -32,9 +31,11 @@ public class DebeziumConnectorEntity {
     private String databaseType;
 
     @Convert(converter = MapToStringConverter.class)
+    @Column(columnDefinition = "text")
     private Map<String, String> baseConfig;
 
     @Convert(converter = TableIdentifierSetConverter.class)
+    @Column(columnDefinition = "text")
     private Set<TableIdentifier> tables;
 
     @Convert(converter = ConnectorStatusConverter.class)
