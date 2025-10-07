@@ -84,7 +84,6 @@ public class AuditEventConsumer {
 
     private String extractRecordId(ConsumerRecord<String, String> record, Map<String, Object> before, Map<String, Object> after) {
         try {
-            // ưu tiên lấy từ Kafka key (Debezium key là PK)
             if (record.key() != null) {
                 JsonNode keyNode = objectMapper.readTree(record.key());
                 JsonNode payload = keyNode.path("payload");
@@ -101,7 +100,7 @@ public class AuditEventConsumer {
         if (before != null && before.containsKey("id")) {
             return before.get("id").toString();
         }
-        return UUID.randomUUID().toString(); // fallback nếu không có id
+        return UUID.randomUUID().toString();
     }
 
     private ChangeType mapChangeType(String op) {
