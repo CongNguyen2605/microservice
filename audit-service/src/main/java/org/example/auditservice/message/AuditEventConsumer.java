@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.example.auditservice.dto.audit_entry.AuditEntryDto;
+import org.example.auditservice.entity.elastic_search.service.AuditLogService;
 import org.example.auditservice.entity.object_value.TableIdentifier;
 import org.example.auditservice.enums.ChangeType;
 import org.example.auditservice.service.AuditEntryService;
@@ -27,6 +28,7 @@ public class AuditEventConsumer {
 
     private final AuditEntryService auditEntryService;
     private final ObjectMapper objectMapper;
+    private final AuditLogService auditLogService;
 
     @KafkaListener(
             topicPattern = "localhost-dbserver\\..*"
@@ -73,7 +75,18 @@ public class AuditEventConsumer {
                         .build();
 
                 auditEntryService.create(auditEntryDto);
-
+                auditLogService.saveAudit(
+                        tableName,
+                        changeType.name(),
+                        recordId,
+                        Map.of(
+                                "database", database,
+                                "schema", schema,
+                                "before", before,
+                                "after", after,
+                                "timestamp", Instant.now().toString()
+                        )
+                );
             } catch (Exception e) {
                 log.error("❌ Error processing record: {}", record.value(), e);
             }
