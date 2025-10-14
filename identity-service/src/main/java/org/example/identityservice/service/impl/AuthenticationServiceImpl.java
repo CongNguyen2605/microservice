@@ -79,7 +79,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
         JWSObject jwsObject = new JWSObject(jwsHeader, payload);
         try {
-            jwsObject.sign(new MACSigner(SIGNER_KEY.getBytes()));
+            jwsObject.sign(new MACSigner(Base64.getDecoder().decode(SIGNER_KEY)));
             return jwsObject.serialize();
         } catch (JOSEException e) {
             throw new AppException(ErrorCode.valueOf(String.valueOf(e)));
@@ -134,7 +134,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private SignedJWT verifyToken(String token) throws ParseException, JOSEException {
-        JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
+        JWSVerifier verifier = new MACVerifier(Base64.getDecoder().decode(SIGNER_KEY));
         SignedJWT signedJWT = SignedJWT.parse(token);
         Date expiration = signedJWT.getJWTClaimsSet().getExpirationTime();
         var verified = signedJWT.verify(verifier);

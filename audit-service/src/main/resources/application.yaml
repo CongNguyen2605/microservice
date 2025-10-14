@@ -1,3 +1,5 @@
+server:
+  port: 8087
 debezium:
   url: http://localhost:8083
 spring:
@@ -16,3 +18,13 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
   elasticsearch:
     uris: http://localhost:9200
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    enabled: true
+  instance:
+    prefer-ip-address: true
+    hostname: localhost
+    instance-id: ${spring.application.name}:${server.port}
