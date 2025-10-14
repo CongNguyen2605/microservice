@@ -12,7 +12,7 @@ import org.example.productservice.mapper.CartMapper;
 import org.example.productservice.repository.CartRepository;
 import org.example.productservice.repository.ProductRepository;
 import org.example.productservice.service.CartService;
-import org.example.productservice.util.TokenUtil;
+import org.example.productservice.util.AuthUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,13 +23,12 @@ import java.util.List;
 public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final CartMapper cartMapper;
-    private final TokenUtil tokenUtil;
     private final ProductRepository productRepository;
 
 
     @Override
     public IdResponse create(CartDto cartDto) {
-        Long userId = tokenUtil.getUserIdFromToken();
+        Long userId = AuthUtils.getCurrentUserId();
         ProductEntity productEntity = productRepository.findById(cartDto.getProductId()).orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
         CartEntity cart = cartMapper.toEntity(cartDto);
         cart.setUserId(userId);
@@ -43,8 +42,8 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public List<CartDto> getCart() {
-        Long userId = tokenUtil.getUserIdFromToken();
-        return cartRepository.findByUserId(userId);
+        Long userId = AuthUtils.getCurrentUserId();
+        return cartRepository.findByUserId(Long.valueOf(userId));
     }
 
 

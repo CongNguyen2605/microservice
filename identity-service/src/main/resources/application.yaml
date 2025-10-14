@@ -16,4 +16,4 @@ eureka:
     instance-id: ${spring.application.name}:${server.port}
 
 jwt:
-  signerKey: "R9/kuvfe0dMDFtivCBkQFFuUMa2JbhBF6Lm+9cO2DsPQ6gNdqMBdWnWa43S6a9sHz/3gFeIRdshdjQx2MSiWRA=="
+  signerKey: R9/kuvfe0dMDFtivCBkQFFuUMa2JbhBF6Lm+9cO2DsPQ6gNdqMBdWnWa43S6a9sHz/3gFeIRdshdjQx2MSiWRA==

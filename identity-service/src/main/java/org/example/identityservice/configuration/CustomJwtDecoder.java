@@ -1,10 +1,8 @@
 package org.example.identityservice.configuration;
 
-import com.nimbusds.jwt.SignedJWT;
 import lombok.RequiredArgsConstructor;
 import org.example.identityservice.exception.AppException;
 import org.example.identityservice.exception.ErrorCode;
-import org.example.identityservice.service.AuthenticationService;
 import org.example.identityservice.service.BaseRedisService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -14,8 +12,11 @@ import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.stereotype.Component;
 
+import com.nimbusds.jwt.SignedJWT;
+
 import javax.crypto.spec.SecretKeySpec;
 import java.text.ParseException;
+import java.util.Base64;
 import java.util.Objects;
 
 @RequiredArgsConstructor
@@ -23,7 +24,6 @@ import java.util.Objects;
 public class CustomJwtDecoder implements JwtDecoder {
 
     private final BaseRedisService baseRedisService;
-    private final AuthenticationService authenticationService;
     @Value("${jwt.signerKey}")
     private String signerKey;
     private NimbusJwtDecoder nimbusJwtDecoder = null;
@@ -42,7 +42,7 @@ public class CustomJwtDecoder implements JwtDecoder {
             throw new RuntimeException(e);
         }
         if (Objects.isNull(nimbusJwtDecoder)) {
-            SecretKeySpec secretKeySpec = new SecretKeySpec(signerKey.getBytes(), "HS512");
+            SecretKeySpec secretKeySpec = new SecretKeySpec(Base64.getDecoder().decode(signerKey), "HS512");
             nimbusJwtDecoder = NimbusJwtDecoder
                     .withSecretKey(secretKeySpec)
                     .macAlgorithm(MacAlgorithm.HS512)

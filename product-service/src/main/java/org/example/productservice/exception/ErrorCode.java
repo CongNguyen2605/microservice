@@ -12,7 +12,8 @@ public enum ErrorCode {
     ROLE_EXISTS(409, "ROLE Already Exists", HttpStatus.BAD_REQUEST),
     INVALID_PASSWORD(400, "Invalid Password", HttpStatus.BAD_REQUEST),
     UNAUTHORIZED(403, "You don't have permission", HttpStatus.FORBIDDEN),
-    CART_NOT_FOUND(404, "Cart Not Found", HttpStatus.NOT_FOUND);
+    CART_NOT_FOUND(404, "Cart Not Found", HttpStatus.NOT_FOUND),
+    UNAUTHENTICATED(401, "Cart Not Found",HttpStatus.NOT_FOUND );
 
 
     private final int code;

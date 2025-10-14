@@ -1,0 +1,12 @@
+spring:
+  cloud:
+    gateway:
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+jwt:
+  signerKey: R9/kuvfe0dMDFtivCBkQFFuUMa2JbhBF6Lm+9cO2DsPQ6gNdqMBdWnWa43S6a9sHz/3gFeIRdshdjQx2MSiWRA==
