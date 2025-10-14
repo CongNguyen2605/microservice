@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.example.auditservice.dto.audit_entry.AuditEntryDto;
+import org.example.auditservice.entity.elastic_search.Payload;
 import org.example.auditservice.entity.elastic_search.service.AuditLogService;
 import org.example.auditservice.entity.object_value.TableIdentifier;
 import org.example.auditservice.enums.ChangeType;
@@ -79,13 +80,7 @@ public class AuditEventConsumer {
                         tableName,
                         changeType.name(),
                         recordId,
-                        Map.of(
-                                "database", database,
-                                "schema", schema,
-                                "before", before,
-                                "after", after,
-                                "timestamp", Instant.now().toString()
-                        )
+                        new Payload(database,schema,Instant.now().toEpochMilli(),before,after)
                 );
             } catch (Exception e) {
                 log.error("❌ Error processing record: {}", record.value(), e);
