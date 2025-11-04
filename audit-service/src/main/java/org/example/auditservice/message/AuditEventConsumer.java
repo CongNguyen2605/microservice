@@ -83,7 +83,7 @@ public class AuditEventConsumer {
                         new Payload(database,schema,Instant.now().toEpochMilli(),before,after)
                 );
             } catch (Exception e) {
-                log.error("❌ Error processing record: {}", record.value(), e);
+                log.error(" Error processing record: {}", record.value(), e);
             }
         }
 

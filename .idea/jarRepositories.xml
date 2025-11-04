@@ -27,6 +27,11 @@
       <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
     </remote-repository>
     <remote-repository>
+      <option name="id" value="nexus-snapshots" />
+      <option name="name" value="nexus-snapshots" />
+      <option name="url" value="http://194.233.82.115:8081/repository/vds.core-group/" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="nexus-apus" />
       <option name="name" value="nexus-apus" />
       <option name="url" value="http://194.233.82.115:8081/repository/vds.core-group/" />
