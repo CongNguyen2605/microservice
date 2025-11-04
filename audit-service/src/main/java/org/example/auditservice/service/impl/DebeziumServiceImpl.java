@@ -23,14 +23,13 @@ import java.util.Map;
 @Transactional
 @RequiredArgsConstructor
 public class DebeziumServiceImpl implements DebeziumService {
-    private final DebeziumRepository debeziumRepository;
     private final DebeziumMapper debeziumMapper;
     private final DebeziumFeignClient debeziumFeignClient;
     private final TableConfigurationRepository tableConfigurationRepository;
+    private final DebeziumRepository debeziumRepository;
     @Override
     public IdResponse create(DebeziumDto debeziumDto) {
         DebeziumConnectorEntity debeziumConnectorEntity = debeziumMapper.toEntity(debeziumDto);
-
         debeziumConnectorEntity.setCreatedAt(Instant.now());
         debeziumRepository.save(debeziumConnectorEntity);
         Map<String,Object> debeziumConfig = new HashMap<>();
