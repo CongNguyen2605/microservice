@@ -25,6 +25,8 @@ public class SecurityConfig {
             "/api/v1/authentication/login",
             "/api/v1/authentication/introspect",
             "/api/v1/authentication/logout",
+            "/api/v1/authentication/refresh"
+
     };
     private final JwtDecoder jwtDecoder;
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;

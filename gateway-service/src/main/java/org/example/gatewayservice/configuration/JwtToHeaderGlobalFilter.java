@@ -23,12 +23,20 @@ public class JwtToHeaderGlobalFilter implements GlobalFilter, Ordered {
         String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
+            Long userId = jwtService.extractUserId(token);
             String username = jwtService.extractUsername(token);
+            var scopes = jwtService.extractScopes(token);
 
-            if (username != null) {
-                ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-                        .header("X-Username", username)
-                        .build();
+            if (userId != null) {
+                ServerHttpRequest.Builder requestBuilder = exchange.getRequest().mutate()
+                        .header("X-User-Id", String.valueOf(userId));
+                if (username != null) {
+                    requestBuilder.header("X-Username", username);
+                }
+                if (scopes != null && !scopes.isEmpty()) {
+                    requestBuilder.header("X-Roles", String.join(",", scopes));
+                }
+                ServerHttpRequest mutatedRequest = requestBuilder.build();
 
                 return chain.filter(exchange.mutate().request(mutatedRequest).build());
             }

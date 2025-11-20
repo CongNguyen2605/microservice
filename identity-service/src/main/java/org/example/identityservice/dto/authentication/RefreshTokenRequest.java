@@ -9,12 +9,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuthenticationResponse {
-    private String token;
-    private String accessToken;
+public class RefreshTokenRequest {
     private String refreshToken;
-    private Long accessTokenExpiresAt;
-    private Long refreshTokenExpiresAt;
-    private Boolean authenticated;
-
 }

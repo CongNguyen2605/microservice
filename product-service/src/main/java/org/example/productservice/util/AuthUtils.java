@@ -10,14 +10,14 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @Component
 public class AuthUtils {
 
-    public static Long getCurrentUserId() {
+    public Long getCurrentUserId() {
         ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attrs == null) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
         HttpServletRequest request = attrs.getRequest();
-        String userIdHeader = request.getHeader("X-Username");
+        String userIdHeader = request.getHeader("X-User-Id");
 
         if (userIdHeader == null) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);

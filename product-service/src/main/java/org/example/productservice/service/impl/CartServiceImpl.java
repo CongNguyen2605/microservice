@@ -24,11 +24,12 @@ public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final CartMapper cartMapper;
     private final ProductRepository productRepository;
+    private final AuthUtils authUtils;
 
 
     @Override
     public IdResponse create(CartDto cartDto) {
-        Long userId = AuthUtils.getCurrentUserId();
+        Long userId = authUtils.getCurrentUserId();
         ProductEntity productEntity = productRepository.findById(cartDto.getProductId()).orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
         CartEntity cart = cartMapper.toEntity(cartDto);
         cart.setUserId(userId);
@@ -42,7 +43,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public List<CartDto> getCart() {
-        Long userId = AuthUtils.getCurrentUserId();
+        Long userId = authUtils.getCurrentUserId();
         return cartRepository.findByUserId(Long.valueOf(userId));
     }
 
