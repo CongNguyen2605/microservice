@@ -7,4 +7,5 @@ import lombok.Data;
 @Data
 public class InvalidatedTokenDto {
     private String token;
+    private String refreshToken;
 }

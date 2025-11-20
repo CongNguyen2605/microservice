@@ -8,23 +8,29 @@ import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.util.StringUtils;
 
 @Configuration
 public class RedisConfiguration {
 
-    @Value("localhost")
+    @Value("${spring.data.redis.host:localhost}")
     private String redisHost;
-    @Value("6379")
-    private String redisPort;
-    @Value("123456")
+    @Value("${spring.data.redis.port:6379}")
+    private int redisPort;
+    @Value("${spring.data.redis.password:}")
     private String redisPassword;
+    @Value("${spring.data.redis.database:0}")
+    private int redisDatabase;
 
     @Bean
     JedisConnectionFactory jedisConnectionFactory() {
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
         redisStandaloneConfiguration.setHostName(redisHost);
-        redisStandaloneConfiguration.setPort(Integer.valueOf(redisPort));
-        redisStandaloneConfiguration.setPassword(redisPassword);
+        redisStandaloneConfiguration.setPort(redisPort);
+        redisStandaloneConfiguration.setDatabase(redisDatabase);
+        if (StringUtils.hasText(redisPassword)) {
+            redisStandaloneConfiguration.setPassword(redisPassword);
+        }
         return new JedisConnectionFactory(redisStandaloneConfiguration);
     }
 

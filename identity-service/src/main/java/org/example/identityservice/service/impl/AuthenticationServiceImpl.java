@@ -10,6 +10,7 @@ import lombok.experimental.NonFinal;
 import org.example.identityservice.dto.ApiResponse;
 import org.example.identityservice.dto.authentication.AuthenticationRequest;
 import org.example.identityservice.dto.authentication.AuthenticationResponse;
+import org.example.identityservice.dto.authentication.RefreshTokenRequest;
 import org.example.identityservice.dto.introspect.IntrospectRequest;
 import org.example.identityservice.dto.introspect.IntrospectResponse;
 import org.example.identityservice.dto.invalidatedtoken.InvalidatedTokenDto;
@@ -31,7 +32,6 @@ import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -47,6 +47,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @NonFinal
     @Value("${jwt.signerKey}")
     private String SIGNER_KEY;
+    @NonFinal
+    @Value("${jwt.accessTokenExpiration:3600}")
+    private long accessTokenExpiration;
+    @NonFinal
+    @Value("${jwt.refreshTokenExpiration:604800}")
+    private long refreshTokenExpiration;
 
     @Override
     public ApiResponse<AuthenticationResponse> authenticate(AuthenticationRequest authenticationRequest) {
@@ -55,35 +61,28 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (!authenticated) {
             throw new AppException(ErrorCode.INVALID_PASSWORD);
         }
-        var token = generateToken(username);
-        return new ApiResponse<>(AuthenticationResponse.builder()
-                .token(token)
-                .authenticated(true)
-                .build());
+        return new ApiResponse<>(buildAuthenticationResponse(username));
     }
 
     @Override
     public String generateToken(UserEntity user) {
-        JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
-        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(user.getId().toString())
-                .claim("username", user.getUsername())
-                .issueTime(new Date())
-                .expirationTime(new Date(
-                        Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()
-                ))
-                .jwtID(UUID.randomUUID().toString())
-                .claim("scope", buildScope(user))
-                .issuer("identity-service")
-                .build();
-        Payload payload = new Payload(jwtClaimsSet.toJSONObject());
-        JWSObject jwsObject = new JWSObject(jwsHeader, payload);
-        try {
-            jwsObject.sign(new MACSigner(Base64.getDecoder().decode(SIGNER_KEY)));
-            return jwsObject.serialize();
-        } catch (JOSEException e) {
-            throw new AppException(ErrorCode.valueOf(String.valueOf(e)));
+        return buildToken(user, accessTokenExpiration, "access");
+    }
+
+    @Override
+    public ApiResponse<AuthenticationResponse> refreshToken(RefreshTokenRequest refreshTokenRequest) throws JOSEException, ParseException {
+        if (refreshTokenRequest.getRefreshToken() == null || refreshTokenRequest.getRefreshToken().isBlank()) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
         }
+
+        SignedJWT refreshSignedJwt = verifyToken(refreshTokenRequest.getRefreshToken(), "refresh");
+        String userId = refreshSignedJwt.getJWTClaimsSet().getSubject();
+        UserEntity user = userRepository.findById(Long.valueOf(userId))
+                .orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED));
+
+        saveToBlacklist(refreshSignedJwt);
+
+        return new ApiResponse<>(buildAuthenticationResponse(user));
     }
 
     @Override
@@ -91,7 +90,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         var token = introspectRequest.getToken();
 
         try {
-            verifyToken(token);
+            verifyToken(token, null);
         } catch (AppException e) {
             return IntrospectResponse.builder()
                     .valid(false)
@@ -104,10 +103,52 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public void logout(InvalidatedTokenDto invalidatedToken) throws ParseException, JOSEException {
-        var signToken = verifyToken(invalidatedToken.getToken());
-        var jit = signToken.getJWTClaimsSet().getJWTID();
-        Date exDate = signToken.getJWTClaimsSet().getExpirationTime();
-        baseRedisService.set(jit, String.valueOf(exDate));
+        if (invalidatedToken.getToken() != null) {
+            var signedAccess = verifyToken(invalidatedToken.getToken(), null);
+            saveToBlacklist(signedAccess);
+        }
+        if (invalidatedToken.getRefreshToken() != null) {
+            var signedRefresh = verifyToken(invalidatedToken.getRefreshToken(), "refresh");
+            saveToBlacklist(signedRefresh);
+        }
+    }
+
+    private AuthenticationResponse buildAuthenticationResponse(UserEntity user) {
+        String accessToken = buildToken(user, accessTokenExpiration, "access");
+        String refreshToken = buildToken(user, refreshTokenExpiration, "refresh");
+        Instant now = Instant.now();
+        return AuthenticationResponse.builder()
+                .token(accessToken)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .accessTokenExpiresAt(now.plusSeconds(accessTokenExpiration).toEpochMilli())
+                .refreshTokenExpiresAt(now.plusSeconds(refreshTokenExpiration).toEpochMilli())
+                .authenticated(true)
+                .build();
+    }
+
+    private String buildToken(UserEntity user, long expiryInSeconds, String tokenType) {
+        JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
+        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
+                .subject(user.getId().toString())
+                .claim("username", user.getUsername())
+                .issueTime(new Date())
+                .expirationTime(new Date(
+                        Instant.now().plusSeconds(expiryInSeconds).toEpochMilli()
+                ))
+                .jwtID(UUID.randomUUID().toString())
+                .claim("scope", buildScope(user))
+                .issuer("identity-service")
+                .claim("token_type", tokenType)
+                .build();
+        Payload payload = new Payload(jwtClaimsSet.toJSONObject());
+        JWSObject jwsObject = new JWSObject(jwsHeader, payload);
+        try {
+            jwsObject.sign(new MACSigner(Base64.getDecoder().decode(SIGNER_KEY)));
+            return jwsObject.serialize();
+        } catch (JOSEException e) {
+            throw new AppException(ErrorCode.valueOf(String.valueOf(e)));
+        }
     }
 
     private List<String> buildScope(UserEntity user) {
@@ -133,7 +174,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return scopeJoiner;
     }
 
-    private SignedJWT verifyToken(String token) throws ParseException, JOSEException {
+    private SignedJWT verifyToken(String token, String expectedTokenType) throws ParseException, JOSEException {
         JWSVerifier verifier = new MACVerifier(Base64.getDecoder().decode(SIGNER_KEY));
         SignedJWT signedJWT = SignedJWT.parse(token);
         Date expiration = signedJWT.getJWTClaimsSet().getExpirationTime();
@@ -141,11 +182,25 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (!(verified && expiration.after(new Date()))) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
+        if (expectedTokenType != null) {
+            Object claimVal = signedJWT.getJWTClaimsSet().getClaim("token_type");
+            if (claimVal == null || !expectedTokenType.equals(claimVal.toString())) {
+                throw new AppException(ErrorCode.UNAUTHORIZED);
+            }
+        }
         String jti = signedJWT.getJWTClaimsSet().getJWTID();
         if (baseRedisService.get(jti) != null && jti != null) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
         return signedJWT;
+    }
+
+    private void saveToBlacklist(SignedJWT signedJWT) throws ParseException {
+        String jti = signedJWT.getJWTClaimsSet().getJWTID();
+        Date expiration = signedJWT.getJWTClaimsSet().getExpirationTime();
+        long ttlSeconds = Math.max(0, (expiration.getTime() - Instant.now().toEpochMilli()) / 1000);
+        baseRedisService.set(jti, "revoked");
+        baseRedisService.setTimeToLive(jti, ttlSeconds);
     }
 
 }

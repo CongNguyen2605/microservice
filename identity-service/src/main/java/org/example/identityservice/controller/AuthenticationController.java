@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.identityservice.dto.ApiResponse;
 import org.example.identityservice.dto.authentication.AuthenticationRequest;
 import org.example.identityservice.dto.authentication.AuthenticationResponse;
+import org.example.identityservice.dto.authentication.RefreshTokenRequest;
 import org.example.identityservice.dto.introspect.IntrospectRequest;
 import org.example.identityservice.dto.introspect.IntrospectResponse;
 import org.example.identityservice.dto.invalidatedtoken.InvalidatedTokenDto;
@@ -26,6 +27,11 @@ public class AuthenticationController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthenticationResponse>> authenticate(@RequestBody AuthenticationRequest authenticationRequest) {
         return ResponseEntity.ok(authenticationService.authenticate(authenticationRequest));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<AuthenticationResponse>> refresh(@RequestBody RefreshTokenRequest refreshTokenRequest) throws JOSEException, ParseException {
+        return ResponseEntity.ok(authenticationService.refreshToken(refreshTokenRequest));
     }
 
     @PostMapping("/introspect")
